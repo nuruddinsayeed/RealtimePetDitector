@@ -19,7 +19,7 @@ def load_model(trained_model_path, device=DEVICE):
 def detect_from_camera():
     # Configure Detection System
     model = load_model('model.pt')
-    pet_detector = AnimalDitector(model=model, cls_names=['Cat', 'Dog'], save=False)
+    pet_detector = AnimalDitector(model=model, cls_names=['Cat', 'Dog'], save=True)
     
     # start Capturing
     ImageCaptureFactory.caputre_by_cv(

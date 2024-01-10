@@ -1,6 +1,8 @@
 import datetime
 from typing import List
 from ultralytics import YOLO
+import cv2
+from ultralytics.utils.plotting import Annotator
 from pathlib import Path
 
 from app.data_models.detection_models import DetectionResult
@@ -9,7 +11,7 @@ SAVE_TO = Path(__file__).resolve().parent.parent / 'predictions'
 
 class AnimalDitector:
     
-    def __init__(self, model: YOLO, cls_names: List[str], save=True, save_to: Path = SAVE_TO) -> None:
+    def __init__(self, model: YOLO, cls_names: List[str], save: bool = True, save_to: Path = SAVE_TO) -> None:
         self.model = model
         self.detection_classes = cls_names
         self.save_image = save
@@ -19,17 +21,35 @@ class AnimalDitector:
     def detect(self, image) -> List[DetectionResult]:
         
         detected_at = datetime.datetime.now()
-        img_name = detected_at.strftime("%m_%d_%Y_%H_%M_%S")
+        # dir_name = detected_at.strftime("%m_%d_%Y_%H_%M_%S")
         print('started prediction')
-        results = self.model.predict(
-            source=image, conf=.40, save=self.save_image, project = str(self.save_to), name=img_name)
+        # results = self.model.predict(
+        #     source=image, conf=.40, save=self.save_image, project = str(self.save_to), name=dir_name)
+        results = self.model.predict(source=image, conf=.4, save=False)
         detection_ended_at = datetime.datetime.now()
         print(f"Detection took: {(detection_ended_at - detected_at).seconds} seconds.")
         
-        return self.analyze_results(results=results, detected_at=detection_ended_at, cls_names=self.detection_classes)
+        if self.save_image:
+            self.save_plot_image(img=image, results=results)
         
-    @staticmethod
-    def analyze_result_data(result, detected_at: datetime.datetime, cls_names: List[str]) -> DetectionResult:
+        return self.analyze_results(results=results, detected_at=detection_ended_at, cls_names=self.detection_classes)
+    
+    def save_plot_image(self, img, results):
+        for result in results:
+            annotator = Annotator(img)
+        
+            boxes = result.boxes
+            for box in boxes:
+                
+                b = box.xyxy[0]  # get box coordinates in (left, top, right, bottom) format
+                c = box.cls
+                annotator.box_label(b, self.model.names[int(c)])
+            
+        img = annotator.result() 
+        cv2.imwrite(filename=str(self.save_to / f'{datetime.datetime.now().strftime("%m_%d_%Y_%H_%M_%S")}.png'), img=img)
+
+
+    def analyze_result_data(self, result, detected_at: datetime.datetime, cls_names: List[str]) -> DetectionResult:
         detected_cls_list = result.boxes.cls
         detection_confidanc_list = result.boxes.conf
         
