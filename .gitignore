@@ -1,9 +1,0 @@
-.DS_Store
-__pycache__/
-Test/
-run_old.py
-.venv/
-
-# Prediction
-DataAnnotations/
-images/

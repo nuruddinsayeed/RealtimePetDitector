@@ -1,9 +1,0 @@
-
-path: E:/nosave/ImageDetection/data  # dataset path
-train: images/train  # Train images path
-val: images/val  # validation images path
-
-# image classes 
-names:
-  0: Cat
-  1: Dog
