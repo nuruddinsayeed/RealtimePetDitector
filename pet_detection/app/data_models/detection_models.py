@@ -9,6 +9,7 @@ class DetectedClass(NamedTuple):
 
 @dataclasses.dataclass
 class DetectionResult:
+    detection_fps: float
     detected_at: datetime.datetime
     confidences: List[DetectedClass] = dataclasses.field(default_factory=list)
     

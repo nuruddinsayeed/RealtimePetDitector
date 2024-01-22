@@ -1,9 +1,11 @@
-from typing import Callable
+from typing import Callable, Tuple, Any
 
 import numpy as np
 import matplotlib.figure as mpl_fig
 import matplotlib.animation as anim
 from matplotlib.backends.backend_qt5agg import FigureCanvas
+
+from pet_detection.app.data_models.detection_models import DetectionResult
 
 
 # TODO: get time diff as milisec
@@ -12,12 +14,14 @@ from matplotlib.backends.backend_qt5agg import FigureCanvas
 class PlotFigureCanvas(anim.FuncAnimation):
 
     def __init__(self, x_len:int, y_range:list, interval:int,
+                 detect_pet: Callable[..., Tuple[DetectionResult, Any]],
                  set_cat_count: Callable[[int], None], set_dog_count: Callable[[int], None]) -> None:
 
         self.canvas = FigureCanvas(mpl_fig.Figure())
         self._x_len_ = x_len
         self._y_range_ = y_range
         self.interval = interval
+        self._detect_pet = detect_pet
         self._set_cat_count = set_cat_count
         self._set_dog_count = set_dog_count
 
@@ -40,14 +44,15 @@ class PlotFigureCanvas(anim.FuncAnimation):
         # TODO: Call image process method from here and capture the process time
         # TODO: Think how I will show the detail if use select to show capture summery
         
-        new_point = round(get_next_datapoint(), 2)
-        
+        # new_point = round(get_next_datapoint(), 2)
+        detect_res, frame = self._detect_pet()
+        new_point = detect_res.detection_fps
         y.append(new_point)     # Add new datapoint
         y = y[-self._x_len_:]                        # Truncate list _y_
         self._line_.set_ydata(y)
         
         self._set_cat_count(i)
-        self._set_dog_count(int(new_point))
+        self._set_dog_count(int(8))
         return self._line_,
     
 

@@ -19,17 +19,22 @@ class ImageCapture(abc.ABC):
     def start_capturing(self, image_processor: Callable):
         
         while True:
-            time.sleep(2)
+            detect_res, frame = self.capture_and_process(image_processor=image_processor)
+            cv2.imshow('frame', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
             
-            try:
-                image = self.capture_image()
-            except ImageCaptureFailure as e:
-                # logging.warning(f"Camera Capture failure at {datetime.datetime.now()}")
-                logging.warning(str(e))
-                continue
-
-            # Process captured image
-            image_processor(image)
+    def capture_and_process(self, image_processor: Callable):
+        try:
+            image = self.capture_image()
+        except ImageCaptureFailure as e:
+            logging.warning(str(e))
+            
+        detect_res, frame = image_processor(image)
+        print(detect_res)
+        
+        return detect_res, frame
+            
  
 
 class CaptureByCv(ImageCapture):
@@ -37,8 +42,10 @@ class CaptureByCv(ImageCapture):
     def __init__(self) -> None:
         super().__init__()
         self.capturer = cv2.VideoCapture(0)
-        self.capturer.set(3, 640)
-        self.capturer.set(4, 480)
+        self.capturer.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.capturer.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        # self.capturer.set(3, 640)
+        # self.capturer.set(4, 480)
         
     def capture_image(self):
         is_captured, frame = self.capturer.read()
