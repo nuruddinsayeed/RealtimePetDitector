@@ -1,4 +1,5 @@
 import sys
+from typing import List
 from PySide6 import QtWidgets
 from PySide6 import QtCore
 from PySide6 import QtGui
@@ -7,6 +8,7 @@ from plot_figure_canvas import PlotFigureCanvas
 from pet_detection import load_model
 from pet_detection.app.pet_detector import AnimalDitector
 from pet_detection.app.image_capture import ImageCaptureFactory
+from pet_detection.app.data_models.detection_models import DetectedClass
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -14,6 +16,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.myFig = None
+        self.detection_classes = ['Cat', 'Dog']
+        self._dog_count, self._cat_count = 0, 0
         
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(1500, 600)
@@ -31,7 +35,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _run_image_detection(self):
         model = load_model()
-        pet_detector = AnimalDitector(model=model, cls_names=['Cat', 'Dog'], save=False, return_img=True)
+        pet_detector = AnimalDitector(model=model, cls_names=self.detection_classes, save=False, return_img=True)
         
         # start Capturing
         return ImageCaptureFactory.caputre_by_cv(
@@ -54,7 +58,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.myFig:
             self.myFig = PlotFigureCanvas(x_len=200, y_range=[0, 25], interval=100, 
                                       detect_pet=self._run_image_detection,
-                                      set_cat_count=self._update_cat_count, set_dog_count=self._update_dog_count)
+                                      update_detect_count=self._update_count)
             self.main_layout.addWidget(self.myFig.canvas)
         else:
             self.myFig.animation.resume()
@@ -99,19 +103,28 @@ class MainWindow(QtWidgets.QMainWindow):
         summary_layout = QtWidgets.QVBoxLayout()
         group_box.setLayout(summary_layout)
         
-        self.dog_count_label = QtWidgets.QLabel('14', alignment=QtCore.Qt.AlignLeft)
-        self.cat_count_label = QtWidgets.QLabel('20', alignment=QtCore.Qt.AlignLeft)
+        self.dog_count_label = QtWidgets.QLabel('0', alignment=QtCore.Qt.AlignLeft)
+        self.cat_count_label = QtWidgets.QLabel('0', alignment=QtCore.Qt.AlignLeft)
         
         summary_layout.addWidget(self.dog_count_label)
         summary_layout.addWidget(self.cat_count_label)
         
         summary_layout.addStretch()
         
-    def _update_cat_count(self, count: int):
-        self.cat_count_label.setText(f'Total predicted Cats: {count}')
+    def _update_count(self, detected_classes: List[DetectedClass]):
+        for det_cls in detected_classes:
+            if det_cls.class_name == self.detection_classes[0]:
+                self._increase_cat_count()
+            elif det_cls.class_name == self.detection_classes[1]:
+                self._increase_dog_count()
         
-    def _update_dog_count(self, count: int):
-        self.dog_count_label.setText(f'Total predicted Dogs: {count}')
+    def _increase_cat_count(self):
+        self._cat_count += 1
+        self.cat_count_label.setText(f'Total predicted Cats: {self._cat_count}')
+        
+    def _increase_dog_count(self):
+        self._dog_count += 1
+        self.dog_count_label.setText(f'Total predicted Dogs: {self._dog_count}')
         
     @staticmethod
     def add_button(parent: QtWidgets.QLayout, btn: QtWidgets.QToolButton, btn_txt: str, btn_connect: callable):

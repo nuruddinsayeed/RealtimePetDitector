@@ -1,18 +1,18 @@
-from typing import Callable, Tuple, Any
+from typing import Callable, Tuple, Any, List
 
 import numpy as np
 import matplotlib.figure as mpl_fig
 import matplotlib.animation as anim
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 
-from pet_detection.app.data_models.detection_models import DetectionResult
+from pet_detection.app.data_models.detection_models import DetectionResult, DetectedClass
 
 
 class PlotFigureCanvas(anim.FuncAnimation):
 
     def __init__(self, x_len:int, y_range:list, interval:int,
                  detect_pet: Callable[..., Tuple[DetectionResult, Any]],
-                 set_cat_count: Callable[[int], None], set_dog_count: Callable[[int], None]) -> None:
+                 update_detect_count: Callable[[List[DetectedClass]], None]) -> None:
 
         plt_fig = mpl_fig.Figure()
         plt_fig.suptitle('Real time image detection update')
@@ -22,14 +22,14 @@ class PlotFigureCanvas(anim.FuncAnimation):
         self._y_range_ = y_range
         self.interval = interval
         self._detect_pet = detect_pet
-        self._set_cat_count = set_cat_count
-        self._set_dog_count = set_dog_count
+        self._update_detect_count = update_detect_count
 
         x = list(range(0, x_len))
         y = [0] * x_len
 
         self._ax_  = self.canvas.figure.subplots()
-        self._ax_.set_ylabel('Frame Rate / (S)')
+        self._ax_.set_ylabel('Frame rate / (S)')
+        self._ax_.set_xlabel('Porcessed image count')
         
         self._ax_.set_ylim(ymin=self._y_range_[0], ymax=self._y_range_[1])
         self._line_, = self._ax_.plot(x, y)
@@ -43,16 +43,14 @@ class PlotFigureCanvas(anim.FuncAnimation):
         This function gets called regularly by the timer.
 
         '''
-        # TODO: Call image process method from here and capture the process time
-        # TODO: Think how I will show the detail if use select to show capture summery
-        
+   
         detect_res, frame = self._detect_pet()
         new_point = detect_res.detection_fps
         y.append(new_point)     # Add new datapoint
         y = y[-self._x_len_:]
         self._line_.set_ydata(y)
         
-        self._set_cat_count(i)
-        self._set_dog_count(int(8))
+        if detect_res.confidences:
+            self._update_detect_count(detect_res.confidences)
         return self._line_,
     
