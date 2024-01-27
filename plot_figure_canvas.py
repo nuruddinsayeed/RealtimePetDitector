@@ -49,10 +49,10 @@ class PlotFigureCanvas(anim.FuncAnimation):
    
         detect_res, frame = self._detect_pet()
         if self._live_cam:
-            cv2.imshow('frame', frame)
+            cv2.imshow('Camera', frame)
         
         new_point = detect_res.detection_fps
-        y.append(new_point)     # Add new datapoint
+        y.append(int(float(new_point)))     # Add new datapoint
         y = y[-self._x_len_:]
         self._line_.set_ydata(y)
         

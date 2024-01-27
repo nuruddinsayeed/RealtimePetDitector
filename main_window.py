@@ -34,14 +34,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self._init_header_ui(parent=self.main_layout)
         self.frame.setLayout(self.main_layout)
         self.setCentralWidget(self.frame)
-
-    def _run_image_detection(self):
-        model = load_model()
-        pet_detector = AnimalDitector(model=model, cls_names=self.detection_classes, save=False, return_img=True)
         
-        # start Capturing
-        return ImageCaptureFactory.caputre_by_cv(
-            ).capture_and_process(image_processor=pet_detector.detect)
+        self._config_image_detection()
+        
+    def _config_image_detection(self):
+        self._pet_detector = AnimalDitector(
+            model=load_model(), cls_names=self.detection_classes, save=False, return_img=True)
+        self.image_capture_fac = ImageCaptureFactory.caputre_by_cv()
+        
+    def _run_image_detection(self):
+        return self.image_capture_fac.capture_and_process(image_processor=self._pet_detector.detect)
         
     def _init_header_ui(self, parent: QtWidgets.QLayout):
         group_box = QtWidgets.QGroupBox()
@@ -142,7 +144,7 @@ class MainWindow(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
-    main_win = MainWindow(live_cam=True, cap_interval=100)
+    main_win = MainWindow(live_cam=True, cap_interval=10)
     main_win.configure()
     main_win.show()
 
