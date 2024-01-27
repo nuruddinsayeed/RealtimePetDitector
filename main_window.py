@@ -13,11 +13,12 @@ from pet_detection.app.data_models.detection_models import DetectedClass
 
 class MainWindow(QtWidgets.QMainWindow):
     
-    def __init__(self) -> None:
+    def __init__(self, live_cam: bool = False) -> None:
         super().__init__()
         self.myFig = None
         self.detection_classes = ['Cat', 'Dog']
         self._dog_count, self._cat_count = 0, 0
+        self._live_cam = live_cam
         
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(1500, 600)
@@ -58,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.myFig:
             self.myFig = PlotFigureCanvas(x_len=200, y_range=[0, 25], interval=100, 
                                       detect_pet=self._run_image_detection,
-                                      update_detect_count=self._update_count)
+                                      update_detect_count=self._update_count, live_cam=self._live_cam)
             self.main_layout.addWidget(self.myFig.canvas)
         else:
             self.myFig.animation.resume()
@@ -140,7 +141,7 @@ class MainWindow(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
-    main_win = MainWindow()
+    main_win = MainWindow(live_cam=False)
     main_win.configure()
     main_win.show()
 

@@ -1,5 +1,6 @@
 from typing import Callable, Tuple, Any, List
 
+import cv2
 import numpy as np
 import matplotlib.figure as mpl_fig
 import matplotlib.animation as anim
@@ -12,12 +13,14 @@ class PlotFigureCanvas(anim.FuncAnimation):
 
     def __init__(self, x_len:int, y_range:list, interval:int,
                  detect_pet: Callable[..., Tuple[DetectionResult, Any]],
-                 update_detect_count: Callable[[List[DetectedClass]], None]) -> None:
+                 update_detect_count: Callable[[List[DetectedClass]], None],
+                 live_cam: bool = False) -> None:
 
         plt_fig = mpl_fig.Figure()
         plt_fig.suptitle('Real time image detection update')
 
         self.canvas = FigureCanvas(plt_fig)
+        self._live_cam = live_cam
         self._x_len_ = x_len
         self._y_range_ = y_range
         self.interval = interval
@@ -45,6 +48,9 @@ class PlotFigureCanvas(anim.FuncAnimation):
         '''
    
         detect_res, frame = self._detect_pet()
+        if self._live_cam:
+            cv2.imshow('frame', frame)
+        
         new_point = detect_res.detection_fps
         y.append(new_point)     # Add new datapoint
         y = y[-self._x_len_:]
