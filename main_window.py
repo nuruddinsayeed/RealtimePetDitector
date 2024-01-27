@@ -13,6 +13,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def __init__(self) -> None:
         super().__init__()
+        self.myFig = None
         
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(1500, 600)
@@ -24,18 +25,10 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.main_layout = QtWidgets.QVBoxLayout()
         
-        # self.set_button_layout(parent=layout)
-        # self.set_summary_layout(parent=layout)
         self._init_header_ui(parent=self.main_layout)
         self.frame.setLayout(self.main_layout)
         self.setCentralWidget(self.frame)
-        
-        # # Matplotlib Figure
-        # self.myFig = PlotFigureCanvas(x_len=200, y_range=[0, 25], interval=100, 
-        #                               detect_pet=self._run_image_detection,
-        #                               set_cat_count=self._update_cat_count, set_dog_count=self._update_dog_count)
-        # layout.addWidget(self.myFig.canvas)  # TODO: update total detected info from canvas, find out how can you get the data
-        
+
     def _run_image_detection(self):
         model = load_model()
         pet_detector = AnimalDitector(model=model, cls_names=['Cat', 'Dog'], save=False, return_img=True)
@@ -57,18 +50,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.set_button_layout(parent=heading_layout)
         self.set_summary_layout(parent=heading_layout)
         
+    def _init_canvas(self):
+        if not self.myFig:
+            self.myFig = PlotFigureCanvas(x_len=200, y_range=[0, 25], interval=100, 
+                                      detect_pet=self._run_image_detection,
+                                      set_cat_count=self._update_cat_count, set_dog_count=self._update_dog_count)
+            self.main_layout.addWidget(self.myFig.canvas)
+        else:
+            self.myFig.animation.resume()
+        
     def _start_detection(self):
         # Matplotlib Figure
         self.start_btn.setEnabled(False)
-        self.myFig = PlotFigureCanvas(x_len=200, y_range=[0, 25], interval=100, 
-                                      detect_pet=self._run_image_detection,
-                                      set_cat_count=self._update_cat_count, set_dog_count=self._update_dog_count)
-        self.main_layout.addWidget(self.myFig.canvas)  # TODO: update total detected info from canvas, find out how can you get the data
-        self.stop_btn.setEnabled(True)
+        self._init_canvas()
+        self.pause_btn.setEnabled(True)
         
-    def _stop_detection(self):
-        self.stop_btn.setEnabled(False)
-        self.main_layout.itemAt(self.main_layout.indexOf(self.myFig.canvas)).widget().deleteLater()
+    def _pause_detection(self):
+        self.pause_btn.setEnabled(False)
+        self.myFig.animation.pause()
         self.start_btn.setEnabled(True)
         
     def set_button_layout(self, parent: QtWidgets.QLayout):
@@ -83,11 +82,13 @@ class MainWindow(QtWidgets.QMainWindow):
         group_box_layout.addLayout(buttons_layout)
         
         self.start_btn = QtWidgets.QToolButton()
-        self.stop_btn = QtWidgets.QToolButton()
+        self.pause_btn = QtWidgets.QToolButton()
         
-        self.add_button(parent=buttons_layout, btn=self.start_btn, btn_txt='Start Monitor', btn_connect=self._start_detection)
-        self.add_button(parent=buttons_layout, btn=self.stop_btn, btn_txt='Stop Monitor', btn_connect=self._stop_detection)
-        self.stop_btn.setEnabled(False)
+        self.add_button(
+            parent=buttons_layout, btn=self.start_btn, btn_txt='Start Monitor', btn_connect=self._start_detection)
+        self.add_button(
+            parent=buttons_layout, btn=self.pause_btn, btn_txt='Pause Monitor', btn_connect=self._pause_detection)
+        self.pause_btn.setEnabled(False)
         
         buttons_layout.setAlignment(QtCore.Qt.AlignLeft)
         
@@ -124,12 +125,6 @@ class MainWindow(QtWidgets.QMainWindow):
         
 
 if __name__ == '__main__':
-    # qapp = QtWidgets.QApplication(sys.argv)
-    # main_win = MainWindow()
-    # main_win.configure()
-    # main_win.show()
-    # qapp.exec_()
-    
     app = QtWidgets.QApplication(sys.argv)
 
     main_win = MainWindow()
